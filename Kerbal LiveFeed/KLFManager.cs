@@ -57,7 +57,6 @@ namespace KLF
 
         public Dictionary<String, VesselEntry> vessels = new Dictionary<string, VesselEntry>();
         public SortedDictionary<String, VesselStatusInfo> playerStatus = new SortedDictionary<string, VesselStatusInfo>();
-        public RenderingManager renderManager;
         public PlanetariumCamera planetariumCam;
 
         public Queue<byte[]> interopOutQueue = new Queue<byte[]>();
@@ -121,13 +120,7 @@ namespace KLF
         }
 
 
-        public bool globalUIToggle
-        {
-            get
-            {
-                return renderManager == null || renderManager.uiElementsToDisable.Length < 1 || renderManager.uiElementsToDisable[0].activeSelf;
-            }
-        }
+      
 
         public bool sceneIsValid
         {
@@ -152,7 +145,7 @@ namespace KLF
         {
             get
             {
-                return sceneIsValid && KLFInfoDisplay.infoDisplayActive && globalUIToggle;
+                return sceneIsValid && KLFInfoDisplay.infoDisplayActive;
             }
         }
 
@@ -192,14 +185,14 @@ namespace KLF
 
         public void updateStep()
         {
-            if (HighLogic.LoadedScene == GameScenes.LOADING)
+           if (HighLogic.LoadedScene == GameScenes.LOADING)
                 return; //Don't do anything while the game is loading
 
             if (planetariumCam != null && planetariumCam.gameObject.GetComponent<KLFCameraScript>() == null)
             {
                 Debug.Log("Added KLF Camera Script");
                 KLFCameraScript script = planetariumCam.gameObject.AddComponent<KLFCameraScript>();
-                script.manager = this;
+               script.manager = this;
             }
             // Animate ALert Icon
             if (KLF_button_alert_anim != 0)
@@ -456,7 +449,7 @@ namespace KLF
 
         private KLFVesselUpdate getVesselUpdate(Vessel vessel)
         {
-
+            // BAD CODE
             if (vessel == null || vessel.mainBody == null)
                 return null;
 
@@ -547,10 +540,11 @@ namespace KLF
             else
                 update.state = State.DEAD;
 
-            update.timeScale = (float)Planetarium.TimeScale;
+            update.timeScale = 1; //(float)Planetarium.TimeScale;
             update.bodyName = vessel.mainBody.bodyName;
 
             return update;
+           
 
         }
 
@@ -1401,12 +1395,10 @@ namespace KLF
         public void Update()
         {
 
-            if (HighLogic.LoadedScene == GameScenes.LOADING)
+            if (HighLogic.LoadedScene == GameScenes.LOADING || HighLogic.LoadedScene == GameScenes.MAINMENU)
                 return; //Don't do anything while the game is loading
 
-            //Find an instance of the game's RenderingManager
-            if (renderManager == null)
-                renderManager = (RenderingManager)FindObjectOfType(typeof(RenderingManager));
+           
 
             //Find an instance of the game's PlanetariumCamera
             if (planetariumCam == null)
