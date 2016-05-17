@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using KSP.UI.Screens;
 
 namespace KLF
 {
@@ -57,6 +56,7 @@ namespace KLF
 
         public Dictionary<String, VesselEntry> vessels = new Dictionary<string, VesselEntry>();
         public SortedDictionary<String, VesselStatusInfo> playerStatus = new SortedDictionary<string, VesselStatusInfo>();
+        public RenderingManager renderManager;
         public PlanetariumCamera planetariumCam;
 
         public Queue<byte[]> interopOutQueue = new Queue<byte[]>();
@@ -120,7 +120,13 @@ namespace KLF
         }
 
 
-      
+        public bool globalUIToggle
+        {
+            get
+            {
+                return renderManager == null || renderManager.uiElementsToDisable.Length < 1 || renderManager.uiElementsToDisable[0].activeSelf;
+            }
+        }
 
         public bool sceneIsValid
         {
@@ -145,7 +151,7 @@ namespace KLF
         {
             get
             {
-                return sceneIsValid && KLFInfoDisplay.infoDisplayActive;
+                return sceneIsValid && KLFInfoDisplay.infoDisplayActive && globalUIToggle;
             }
         }
 
@@ -185,14 +191,14 @@ namespace KLF
 
         public void updateStep()
         {
-           if (HighLogic.LoadedScene == GameScenes.LOADING)
+            if (HighLogic.LoadedScene == GameScenes.LOADING)
                 return; //Don't do anything while the game is loading
 
             if (planetariumCam != null && planetariumCam.gameObject.GetComponent<KLFCameraScript>() == null)
             {
                 Debug.Log("Added KLF Camera Script");
                 KLFCameraScript script = planetariumCam.gameObject.AddComponent<KLFCameraScript>();
-               script.manager = this;
+                script.manager = this;
             }
             // Animate ALert Icon
             if (KLF_button_alert_anim != 0)
@@ -346,7 +352,7 @@ namespace KLF
                     && EditorLogic.fetch != null
                     && EditorLogic.fetch.ship != null && EditorLogic.fetch.ship.Count > 0
                     && EditorLogic.fetch.shipNameField != null
-                    && EditorLogic.fetch.shipNameField.text != null && EditorLogic.fetch.shipNameField.text.Length > 0;
+                    && EditorLogic.fetch.shipNameField.Text != null && EditorLogic.fetch.shipNameField.Text.Length > 0;
 
                 String[] status_array = null;
 
@@ -355,7 +361,7 @@ namespace KLF
                     status_array = new String[3];
 
                     //Vessel name
-                    String shipname = EditorLogic.fetch.shipNameField.text;
+                    String shipname = EditorLogic.fetch.shipNameField.Text;
 
                     if (shipname.Length > MAX_VESSEL_NAME_LENGTH)
                         shipname = shipname.Substring(0, MAX_VESSEL_NAME_LENGTH); //Limit vessel name length
@@ -449,7 +455,7 @@ namespace KLF
 
         private KLFVesselUpdate getVesselUpdate(Vessel vessel)
         {
-            // BAD CODE
+
             if (vessel == null || vessel.mainBody == null)
                 return null;
 
@@ -540,11 +546,10 @@ namespace KLF
             else
                 update.state = State.DEAD;
 
-            update.timeScale = 1; //(float)Planetarium.TimeScale;
+            update.timeScale = (float)Planetarium.TimeScale;
             update.bodyName = vessel.mainBody.bodyName;
 
             return update;
-           
 
         }
 
@@ -1395,10 +1400,12 @@ namespace KLF
         public void Update()
         {
 
-            if (HighLogic.LoadedScene == GameScenes.LOADING || HighLogic.LoadedScene == GameScenes.MAINMENU)
+            if (HighLogic.LoadedScene == GameScenes.LOADING)
                 return; //Don't do anything while the game is loading
 
-           
+            //Find an instance of the game's RenderingManager
+            if (renderManager == null)
+                renderManager = (RenderingManager)FindObjectOfType(typeof(RenderingManager));
 
             //Find an instance of the game's PlanetariumCamera
             if (planetariumCam == null)
